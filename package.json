@@ -1,0 +1,13 @@
+{
+  "name": "ufo_client",
+  "version": "0.0.0",
+  "description": "Client for RSA UFO candidate testing. Requires gmp-ecm",
+  "main": "index.js",
+  "author": "Gnosis #anoncoin Freenode IRC",
+  "dependencies": {
+    "sodium": "^1.0.11",
+    "bigint": "^0.4.2",
+    "js-yaml": "~3.0.2",
+    "request": "~2.34.0"
+  }
+}

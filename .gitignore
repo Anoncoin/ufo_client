@@ -1,0 +1,11 @@
+.*.swp
+*.*~*
+*.bak
+*.rej
+*.orig
+*.patch
+
+# Mac specific
+.DS_Store
+
+node_modules
