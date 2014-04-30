@@ -1,6 +1,7 @@
 'use strict';
 
 var os = require('os');
+var fs = require('fs');
 var child_process = require('child_process');
 var yaml = require('js-yaml');
 
@@ -15,7 +16,11 @@ if (process.argv.length !== 3) {
   process.exit(0);
 }
 
-//XXX
+var config = yaml.safeLoad(fs.readFileSync(process.argv[2], 'utf8'));
+var nick = config.nick,
+    cores = config.cores,
+    pubkey = new Buffer(config.pubkey, 'base64'),
+    secret = new Buffer(config.secret, 'base64');
 
 function generateNewConfig() {
   var nick = 'anon' + Math.round(Math.random()*10000);
@@ -27,6 +32,6 @@ function generateNewConfig() {
     nick: nick,
     cores: cores,
     pubkey: pubkey.toString('base64'),
-    secret: secret.toString('base64'),
+    secret: secret.toString('base64')
   };
 }
