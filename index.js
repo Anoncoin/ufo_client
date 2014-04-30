@@ -3,6 +3,7 @@
 var os = require('os');
 var fs = require('fs');
 var assert = require('assert');
+var format = require('util').format;
 var child_process = require('child_process');
 var yaml = require('js-yaml');
 
@@ -23,14 +24,25 @@ var nick = config.nick,
     pubkey = new Buffer(config.pubkey, 'base64'),
     secret = new Buffer(config.secret, 'base64');
 
+var workers = [];
+
+var do_exit = false;
+process.on('SIGINT', function(){
+  console.log('Waiting for %d workers to exit...', workers.length);
+  do_exit = true;
+});
+
+// decrypt a string from the server; returns undefined if failure
 function fromServer(m) {
-  //var nonce = new Buffer(sodium.crypto_box_NONCEBYTES);
-  assert(m && m.nonce && m.c);
-  var nonce = new Buffer(m.nonce, 'base64');
-  assert(nonce.length === sodium.crypto_box_NONCEBYTES);
-  var cipherText = new Buffer(m.c, 'base64');
+  if (!m || !m.charCodeAt) return;   // should be string
+  var m_split = m.split('|');
+  if (m_split.length !== 2) return;
+  var nonce = new Buffer(m_split[0], 'base64');
+  if (nonce.length !== sodium.crypto_box_NONCEBYTES) return;
+  var cipherText = new Buffer(m_split[1], 'base64');
+  if (!cipherText.length) return;
   var plainBuffer = sodium.crypto_box_open(cipherText, nonce, SERVER_KEY, secret);
-  assert(plainBuffer);
+  if (!plainBuffer) return;
   return JSON.parse(plainBuffer.toString('utf8'));
 }
 
@@ -40,10 +52,11 @@ function toServer(o) {
   sodium.randombytes_buf(nonce);
   var plainBuffer = new Buffer(JSON.stringify(o), 'utf8');
   var cipherMsg = sodium.crypto_box(plainBuffer, nonce, SERVER_KEY, secret);
-  return {
-    nonce: nonce.toString('base64'),
-    c: cipherMsg.toString('base64')
-  };
+  assert(cipherMsg);
+  return format('%s|%s',
+    nonce.toString('base64'),
+    cipherMsg.toString('base64')
+  );
 }
 
 function generateNewConfig() {
