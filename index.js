@@ -6,10 +6,15 @@ var assert = require('assert');
 var format = require('util').format;
 var child_process = require('child_process');
 var yaml = require('js-yaml');
+var bigint = require('bigint');
+var request = require('request');
 
 // using low-level API because the high-level API doesn't work as of v1.0.11
 var sodium = require('sodium').api;
 var SERVER_KEY = new Buffer('FhMbJE+Cyla045d6y41lHVfEeFieOnLZQod52GXojUw=', 'base64');
+
+var ufos = require('./data/ufos').map(bigint);
+var r_ufos = [], f_ufos = [];
 
 
 if (process.argv.length !== 3) {
@@ -28,7 +33,11 @@ var workers = [];
 
 var do_exit = false;
 process.on('SIGINT', function(){
-  console.log('Waiting for %d workers to exit...', workers.length);
+  if (do_exit) {
+    console.log('Force quit!');
+    return process.exit(130);
+  }
+  console.log('Waiting for %d workers to exit; press ^C again to force...', workers.length);
   do_exit = true;
 });
 
