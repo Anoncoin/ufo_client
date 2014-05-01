@@ -1,3 +1,5 @@
+Both client and server must be unaffected by replay attacks.
+
 POST /getwork
 
 request: {nick: 'Gnosis',m:'<encrypted>'}
