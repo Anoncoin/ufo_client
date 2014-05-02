@@ -12,6 +12,7 @@ var request = require('request');
 // using low-level API because the high-level API doesn't work as of v1.0.11
 var sodium = require('sodium').api;
 var SERVER_KEY = new Buffer('FhMbJE+Cyla045d6y41lHVfEeFieOnLZQod52GXojUw=', 'base64');
+var SERVER_URL = 'http://127.0.0.1:8000/getwork';   // POST
 
 var ufos = require('./data/ufos').map(bigint);
 var r_ufos = [], f_ufos = [];
@@ -40,6 +41,92 @@ process.on('SIGINT', function(){
   console.log('Waiting for %d workers to exit; press ^C again to force...', workers.length);
   do_exit = true;
 });
+
+function getWork(finishedWork, numToGet) {
+  numToGet = (numToGet===undefined)? (cores - workers.length) : numToGet;
+  assert(finishedWork && finishedWork.length !== undefined);    // array
+  var req = {
+    get: numToGet,
+    results: finishedWork,
+    f: f_ufos.map(function(facs){return facs.length;})
+  };
+  var enc_req = {nick:nick, m:toServer(req)};
+  function attemptLoop() {
+    request.post(SERVER_URL, {json: enc_req}, function(err, response) {
+      function invalid() {
+        if (err) {
+          console.error("Problem connecting to server: %j; retrying...", err.message);
+        } else {
+          console.error("Invalid response: %j; retrying...", response);
+        }
+        return setTimeout(attemptLoop, 1000);
+      }
+      if (err) return invalid();
+
+      if (!response || response.charCodeAt) return invalid(); // if string, invalid JSON
+
+      if (!response.m) return invalid();  // if string, invalid JSON
+
+      var res = fromServer(response.m);
+      if (!res) return invalid();   // could not decrypt
+
+      // at this point, we can trust everything in res as coming from server
+      var work = res.work,
+          factorInfo = res.f;
+      if (work.length === 0) {
+        console.log("No work from server; exiting! :-)");
+        return process.exit(0);
+      }
+
+      factorInfo.forEach(updateFactors);
+
+      work.forEach(function(w) {
+        startWorker(w);
+      });
+    });
+  }
+  attemptLoop();
+}
+
+function updateFactors(facsInfo, ufoIndex) {
+  while ((r_ufos.length - 1) < ufoIndex) {
+    r_ufos.push(ufos[r_ufos.length]);
+    f_ufos.push([]);
+  }
+  var u = r_ufos[ufoIndex];
+  var f = f_ufos[ufoIndex];
+
+  var offset = facsInfo.off,
+      facs = facsInfo.facs;
+
+  // This can only fail if more than one client is running
+  // for the given nick.
+  assert(offset <= (f.length-1));
+
+  facs.forEach(function (fac, i) {
+    fac = bigint(fac);
+    assert(fac.gt(1));
+    assert(fac.lt(u));
+    if (i <= f.length-1) {
+      // we already have this
+      assert(fac.eq(f[i]));
+      return;
+    }
+    var d = u.div(fac);
+    assert(fac.mul(d).eq(u));  // is it actually a factor?
+    assert(fac.le(d));         // server must give the smaller one
+    f.push(fac);
+    r_ufos[ufoIndex] = u = d;
+  });
+}
+
+function startWorker(work) {
+  XXX
+}
+
+function handleCompleted(XXX) {
+  XXX
+}
 
 // decrypt a string from the server; returns undefined if failure
 function fromServer(m) {
