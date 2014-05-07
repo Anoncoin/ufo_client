@@ -34,6 +34,10 @@ var workers = [];
 
 var do_exit = false;
 process.on('SIGINT', function(){
+  if (workers.length == 0) {
+    console.log('Exiting.');
+    return process.exit(130);
+  }
   if (do_exit) {
     console.log('Force quit!');
     return process.exit(130);
@@ -52,22 +56,22 @@ function getWork(finishedWork, numToGet) {
   };
   var enc_req = {nick:nick, m:toServer(req)};
   function attemptLoop() {
-    request.post(SERVER_URL, {json: enc_req}, function(err, response) {
+    request.post(SERVER_URL, {json: enc_req}, function(err, response, body) {
       function invalid() {
         if (err) {
           console.error("Problem connecting to server: %j; retrying...", err.message);
         } else {
-          console.error("Invalid response: %j; retrying...", response);
+          console.error("Invalid response body: %j; retrying...", body);
         }
         return setTimeout(attemptLoop, 1000);
       }
       if (err) return invalid();
 
-      if (!response || response.charCodeAt) return invalid(); // if string, invalid JSON
+      if (!body || body.charCodeAt) return invalid(); // if string, invalid JSON
 
-      if (!response.m) return invalid();  // if string, invalid JSON
+      if (!body.m) return invalid();  // if string, invalid JSON
 
-      var res = fromServer(response.m);
+      var res = fromServer(body.m);
       if (!res) return invalid();   // could not decrypt
 
       // at this point, we can trust everything in res as coming from server
@@ -168,3 +172,5 @@ function generateNewConfig() {
     secret: secret.toString('base64')
   };
 }
+
+getWork([], cores);
