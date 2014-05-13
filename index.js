@@ -13,6 +13,7 @@ var request = require('request');
 var sodium = require('sodium').api;
 var SERVER_KEY = new Buffer('FhMbJE+Cyla045d6y41lHVfEeFieOnLZQod52GXojUw=', 'base64');
 var SERVER_URL = 'http://127.0.0.1:8000/getwork';   // POST
+var RECONNECT_INTERVAL = 1000;     // ms
 
 var ufos = require('./data/ufos').map(bigint);
 var r_ufos = [], f_ufos = [];
@@ -30,7 +31,7 @@ var nick = config.nick,
     pubkey = new Buffer(config.pubkey, 'base64'),
     secret = new Buffer(config.secret, 'base64');
 
-var workers = [];
+var workers = [];     // [ {ecm:<spawned process>, work: {...}}, ...]
 
 var do_exit = false;
 process.on('SIGINT', function(){
@@ -63,7 +64,7 @@ function getWork(finishedWork, numToGet) {
         } else {
           console.error("Invalid response body: %j; retrying...", body);
         }
-        return setTimeout(attemptLoop, 1000);
+        return setTimeout(attemptLoop, RECONNECT_INTERVAL);
       }
       if (err) return invalid();
 
@@ -125,7 +126,28 @@ function updateFactors(facsInfo, ufoIndex) {
 }
 
 function startWorker(work) {
-  XXX
+  assert(work && work.sigma && work.B1 && work.id !== undefined && work.ufo >= 0);
+  assert(r_ufos.length >= (work.ufo+1));    // server should give us factors
+  ecm = child_process.spawn('ecm', ['-sigma',work.sigma, work.B1]);
+  ecm.stdin.end(r_ufos[work.ufo].toString());
+  ecm.stdout.setEncoding('utf8');
+  ecm.stdout.on('data',function(d){
+    console.log('DEBUG: got data: "%s"', d);
+    m = d.match(/^[*]{10} Factor found[^:]*: ([0-9]+)/);
+    if (!m) return;
+    fac = bigint(m[1]);
+    XXX
+  });
+  ecm.stderr.setEncoding('utf8');
+  ecm.stderr.on('data',function(d){
+    console.log('ECM ERR: "%s"', d);
+  });
+  ecm.on('close', function(code){
+    if (code !== 0) {
+      console.log('ecm exited with code %d',code);
+    }
+  });
+  workers.push({ecm:ecm, work:work});
 }
 
 function handleCompleted(XXX) {
