@@ -126,6 +126,7 @@ function updateFactors(facsInfo, ufoIndex) {
 }
 
 function startWorker(work) {
+  var factors_found = [];
   assert(work && work.sigma && work.B1 && work.id !== undefined && work.ufo >= 0);
   assert(r_ufos.length >= (work.ufo+1));    // server should give us factors
   ecm = child_process.spawn('ecm', ['-sigma',work.sigma, work.B1]);
@@ -136,7 +137,15 @@ function startWorker(work) {
     m = d.match(/^[*]{10} Factor found[^:]*: ([0-9]+)/);
     if (!m) return;
     fac = bigint(m[1]);
-    XXX
+    var u = r_ufos[work.ufo];
+    assert(fac.gt(1));
+    assert(fac.lt(u));
+    var d = u.div(fac);
+    assert(d.mul(fac).eq(u));
+    if (d.lt(fac)) {
+      fac = d;
+    }
+    factors_found.push(fac);
   });
   ecm.stderr.setEncoding('utf8');
   ecm.stderr.on('data',function(d){
@@ -146,6 +155,7 @@ function startWorker(work) {
     if (code !== 0) {
       console.log('ecm exited with code %d',code);
     }
+    XXX
   });
   workers.push({ecm:ecm, work:work});
 }
