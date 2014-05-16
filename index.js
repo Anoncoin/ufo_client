@@ -77,6 +77,16 @@ function getWork(finished_work, num_to_get) {
       if (!res) return invalid();   // could not decrypt
 
       // at this point, we can trust everything in res as coming from server
+
+      // first, remove finished work from workers array
+      var finished_work_ids = finished_work.map(function(w){return w.id;});
+      for (var i = workers.length-1; i >= 0; i--) {
+        if (finished_work_ids.indexOf(workers[i].work.id) !== -1) {
+          workers.splice(i,1);
+          break;
+        }
+      }
+
       var work = res.work,
           factorInfo = res.f;
       if (work.length === 0) {
@@ -158,13 +168,23 @@ function startWorker(work) {
     if (code !== 0) {
       console.log('ecm exited with code %d',code);
     }
-    XXX
+    return handleCompleted(work, factors_found, code);
   });
   workers.push({ecm:ecm, work:work});
 }
 
-function handleCompleted(XXX) {
-  XXX
+
+// work - the work object received from the server
+// factors_found - array of bigint
+// return_code - the return code of the ecm command
+function handleCompleted(work, factors_found, return_code) {
+  var work_result = {};
+  work_result.id = work.id;
+  work_result.found = factors_found.map(function(factor){
+    return factor.toString();
+  });
+  work_result.ret = return_code;
+  return getWork([work_result], 1);
 }
 
 
