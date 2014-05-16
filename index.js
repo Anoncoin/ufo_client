@@ -47,12 +47,13 @@ process.on('SIGINT', function(){
   do_exit = true;
 });
 
-function getWork(finishedWork, numToGet) {
-  numToGet = (numToGet===undefined)? (cores - workers.length) : numToGet;
-  assert(finishedWork && finishedWork.length !== undefined);    // array
+
+function getWork(finished_work, num_to_get) {
+  num_to_get = (num_to_get===undefined)? (cores - workers.length) : num_to_get;
+  assert(finished_work && finished_work.length !== undefined);    // array
   var req = {
-    get: numToGet,
-    results: finishedWork,
+    get: num_to_get,
+    results: finished_work,
     f: f_ufos.map(function(facs){return facs.length;})
   };
   var enc_req = {nick:nick, m:toServer(req)};
@@ -93,6 +94,7 @@ function getWork(finishedWork, numToGet) {
   attemptLoop();
 }
 
+
 function updateFactors(facsInfo, ufoIndex) {
   while ((r_ufos.length - 1) < ufoIndex) {
     r_ufos.push(ufos[r_ufos.length]);
@@ -124,6 +126,7 @@ function updateFactors(facsInfo, ufoIndex) {
     r_ufos[ufoIndex] = u = d;
   });
 }
+
 
 function startWorker(work) {
   var factors_found = [];
@@ -164,6 +167,7 @@ function handleCompleted(XXX) {
   XXX
 }
 
+
 // decrypt a string from the server; returns undefined if failure
 function fromServer(m) {
   if (!m || !m.charCodeAt) return;   // should be string
@@ -178,6 +182,7 @@ function fromServer(m) {
   return JSON.parse(plainBuffer.toString('utf8'));
 }
 
+
 function toServer(o) {
   assert(o);
   var nonce = new Buffer(sodium.crypto_box_NONCEBYTES);
@@ -190,6 +195,7 @@ function toServer(o) {
     cipherMsg.toString('base64')
   );
 }
+
 
 function generateNewConfig() {
   var nick = 'anon' + Math.round(Math.random()*10000);
@@ -204,5 +210,6 @@ function generateNewConfig() {
     secret: secret.toString('base64')
   };
 }
+
 
 getWork([], cores);
