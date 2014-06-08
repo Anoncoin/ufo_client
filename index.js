@@ -118,7 +118,7 @@ function updateFactors(facsInfo, ufoIndex) {
 
   // This can only fail if more than one client is running
   // for the given nick.
-  assert(offset <= (f.length-1));
+  assert(offset <= f.length);
 
   facs.forEach(function (fac, i) {
     fac = bigint(fac);
@@ -142,14 +142,14 @@ function startWorker(work) {
   var factors_found = [];
   assert(work && work.sigma && work.B1 && work.id !== undefined && work.ufo >= 0);
   assert(r_ufos.length >= (work.ufo+1));    // server should give us factors
-  ecm = child_process.spawn('ecm', ['-sigma',work.sigma, work.B1]);
+  var ecm = child_process.spawn('ecm', ['-sigma',work.sigma, work.B1]);
   ecm.stdin.end(r_ufos[work.ufo].toString());
   ecm.stdout.setEncoding('utf8');
   ecm.stdout.on('data',function(d){
     console.log('DEBUG: got data: "%s"', d);
-    m = d.match(/^[*]{10} Factor found[^:]*: ([0-9]+)/);
+    var m = d.match(/^[*]{10} Factor found[^:]*: ([0-9]+)/);
     if (!m) return;
-    fac = bigint(m[1]);
+    var fac = bigint(m[1]);
     var u = r_ufos[work.ufo];
     assert(fac.gt(1));
     assert(fac.lt(u));
@@ -169,6 +169,9 @@ function startWorker(work) {
       console.log('ecm exited with code %d',code);
     }
     return handleCompleted(work, factors_found, code);
+  });
+  ecm.stdin.on('error', function(e){
+    console.log('ECM CONN ERR: %s', e.message || e);
   });
   workers.push({ecm:ecm, work:work});
 }
