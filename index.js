@@ -15,7 +15,7 @@ var SERVER_KEY = new Buffer('FhMbJE+Cyla045d6y41lHVfEeFieOnLZQod52GXojUw=', 'bas
 var SERVER_URL = 'http://127.0.0.1:8000/getwork';   // POST
 var RECONNECT_INTERVAL = 1000;     // ms
 
-var ufos = require('./data/ufos').map(bigint);
+var ufos = require('./ufos');
 var r_ufos = [], f_ufos = [];
 
 
@@ -107,7 +107,7 @@ function getWork(finished_work, num_to_get) {
 
 function updateFactors(facsInfo, ufoIndex) {
   while ((r_ufos.length - 1) < ufoIndex) {
-    r_ufos.push(ufos[r_ufos.length]);
+    r_ufos.push(ufos.get(r_ufos.length));
     f_ufos.push([]);
   }
   var u = r_ufos[ufoIndex];
