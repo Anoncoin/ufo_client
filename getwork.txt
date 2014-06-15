@@ -6,6 +6,7 @@ request: {nick: 'Gnosis',m:'<encrypted>'}
 enc request: {
   get: <#work to get>,
   results: <array of work results>,
+  pending: <array of pending work>,     // an array of work IDs
   f: <num factors known for each UFO>   // only updated by server
 }
 work result ex: {
