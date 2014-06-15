@@ -54,6 +54,7 @@ function getWork(finished_work, num_to_get) {
   var req = {
     get: num_to_get,
     results: finished_work,
+    pending: workers.map(function(worker){return worker.work.id}),
     f: f_ufos.map(function(facs){return facs.length;})
   };
   var enc_req = {nick:nick, m:toServer(req)};
