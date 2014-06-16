@@ -10,8 +10,8 @@ enc request: {
   f: <num factors known for each UFO>   // only updated by server
 }
 work result ex: {
-  id: 27,           // work unit ID
-  found: [],        // an array of one or more strings: factors in base 10
+  id: <integer>,    // work unit ID
+  found: <str>,     // factor in base 10
   ret: 0            // return code of ecm command
 }
 
