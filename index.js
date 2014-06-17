@@ -140,10 +140,10 @@ function updateFactors(facsInfo, ufoIndex) {
 
 
 function startWorker(work) {
-  var factors_found = [];
+  var factor_found = null;
   assert(work && work.sigma && work.B1 && work.id !== undefined && work.ufo >= 0);
   assert(r_ufos.length >= (work.ufo+1));    // server should give us factors
-  var ecm = child_process.spawn('ecm', ['-sigma',work.sigma, work.B1]);
+  var ecm = child_process.spawn('ecm', ['-sigma','-one',work.sigma, work.B1]);
   ecm.stdin.end(r_ufos[work.ufo].toString());
   ecm.stdout.setEncoding('utf8');
   ecm.stdout.on('data',function(d){
@@ -159,7 +159,7 @@ function startWorker(work) {
     if (d.lt(fac)) {
       fac = d;
     }
-    factors_found.push(fac);
+    factor_found = fac;
   });
   ecm.stderr.setEncoding('utf8');
   ecm.stderr.on('data',function(d){
@@ -169,7 +169,7 @@ function startWorker(work) {
     if (code !== 0) {
       console.log('ecm exited with code %d',code);
     }
-    return handleCompleted(work, factors_found, code);
+    return handleCompleted(work, factor_found, code);
   });
   ecm.stdin.on('error', function(e){
     console.log('ECM CONN ERR: %s', e.message || e);
@@ -179,14 +179,14 @@ function startWorker(work) {
 
 
 // work - the work object received from the server
-// factors_found - array of bigint
+// factor_found - bigint|null
 // return_code - the return code of the ecm command
-function handleCompleted(work, factors_found, return_code) {
+function handleCompleted(work, factor_found, return_code) {
   var work_result = {};
   work_result.id = work.id;
-  work_result.found = factors_found.map(function(factor){
-    return factor.toString();
-  });
+  if (factor_found) {
+    work_result.found = factor_found.toString();
+  }
   work_result.ret = return_code;
   return getWork([work_result], 1);
 }
