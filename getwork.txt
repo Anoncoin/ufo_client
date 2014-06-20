@@ -11,7 +11,7 @@ enc request: {
 }
 work result ex: {
   id: <integer>,    // work unit ID
-  found: <str>,     // factor in base 10
+  found: <str>,     // factor in base 10. If no factor found, not defined
   ret: 0            // return code of ecm command
 }
 
