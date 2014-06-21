@@ -10,6 +10,13 @@ cd ufo_client
 npm install
 ```
 
+Mac OS X users: if the last step fails and your npm-debug.log contains "illegal text-relocation to '___gmp_binvert_limb_table'", try uninstalling and reinstalling libgmp:
+
+```
+sudo port clean gmp
+sudo port upgrade gmp
+```
+
 Installing dependencies on Ubuntu (and Debian, and its derivatives):
 ```
 sudo apt-get install gmp-ecm nodejs
