@@ -12,7 +12,7 @@ enc request: {
 work result ex: {
   id: <integer>,    // work unit ID
   found: <str>,     // factor in base 10. If no factor found, not defined
-  ret: 0            // return code of ecm command
+  ret: <int|str>    // either ecm command's return code, or the signal received
 }
 
 response: {m:'<encrypted>'}
