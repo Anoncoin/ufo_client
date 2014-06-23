@@ -34,16 +34,12 @@ var nick = config.nick,
 var workers = [];     // [ {ecm:<spawned process>, work: {...}}, ...]
 
 var do_exit = false;
-process.on('SIGINT', function(){
+process.on('SIGHUP', function(){
   if (workers.length == 0) {
     console.log('Exiting.');
-    return process.exit(130);
+    return process.exit(0);
   }
-  if (do_exit) {
-    console.log('Force quit!');
-    return process.exit(130);
-  }
-  console.log('Waiting for %d workers to exit; press ^C again to force...', workers.length);
+  console.log('Waiting for %d workers to exit...', workers.length);
   do_exit = true;
 });
 
@@ -98,8 +94,12 @@ function getWork(finished_work, num_to_get) {
 
       var work = res.work,
           factorInfo = res.f;
-      if (work.length === 0) {
-        console.log("No work from server; exiting! :-)");
+      if (work.length === 0 && workers.length === 0) {
+        if (do_exit) {
+          console.log("No work from server; exiting! :-)");
+        } else {
+          console.log("All done.");
+        }
         return process.exit(0);
       }
 
@@ -210,7 +210,8 @@ function handleCompleted(work, factor_found, return_code) {
     work_result.found = factor_found.toString();
   }
   work_result.ret = return_code;
-  return getWork([work_result], 1);
+  var num_to_get = do_exit ? 0 : 1;
+  return getWork([work_result], num_to_get);
 }
 
 
