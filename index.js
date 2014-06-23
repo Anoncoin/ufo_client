@@ -141,9 +141,13 @@ function updateFactors(facsInfo, ufoIndex) {
 
 function startWorker(work) {
   var factor_found = null;
-  assert(work && work.sigma && work.B1 && work.id !== undefined && work.ufo >= 0);
+  assert(work);
+  assert(work.sigma);
+  assert(work.B1);
+  assert(work.id !== undefined);
+  assert(work.ufo >= 0);
   assert(r_ufos.length >= (work.ufo+1));    // server should give us factors
-  var ecm = child_process.spawn('ecm', ['-sigma','-one',work.sigma, work.B1]);
+  var ecm = child_process.spawn('ecm', ['-sigma',work.sigma, '-one', work.B1]);
   ecm.stdin.end(r_ufos[work.ufo].toString());
   ecm.stdout.setEncoding('utf8');
   ecm.stdout.on('data',function(d){
