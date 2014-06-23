@@ -114,16 +114,17 @@ function getWork(finished_work, num_to_get) {
 }
 
 
-function updateFactors(facsInfo, ufoIndex) {
+function updateFactors(facsInfo) {
+  var ufoIndex = facsInfo.ufo,
+      offset = facsInfo.off,
+      facs = facsInfo.facs;
+
   while ((r_ufos.length - 1) < ufoIndex) {
     r_ufos.push(ufos.get(r_ufos.length));
     f_ufos.push([]);
   }
   var u = r_ufos[ufoIndex];
   var f = f_ufos[ufoIndex];
-
-  var offset = facsInfo.off,
-      facs = facsInfo.facs;
 
   // This can only fail if more than one client is running
   // for the given nick.
@@ -154,7 +155,10 @@ function startWorker(work) {
   assert(work.B1);
   assert(work.id !== undefined);
   assert(work.ufo >= 0);
-  assert(r_ufos.length >= (work.ufo+1));    // server should give us factors
+  while ((r_ufos.length - 1) < work.ufo) {
+    r_ufos.push(ufos.get(r_ufos.length));
+    f_ufos.push([]);
+  }
   var ecm = child_process.spawn('ecm', ['-sigma',work.sigma, '-one', work.B1]);
   var worker = {ecm:ecm, work:work}
   ecm.stdin.end(r_ufos[work.ufo].toString());
