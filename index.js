@@ -49,8 +49,19 @@ process.on('SIGINT', function(){
 
 
 function getWork(finished_work, num_to_get) {
-  num_to_get = (num_to_get===undefined)? (cores - workers.length) : num_to_get;
   assert(finished_work && finished_work.length !== undefined);    // array
+
+  // first, remove finished work from workers array
+  var finished_work_ids = finished_work.map(function(w){return w.id;});
+  for (var i = workers.length-1; i >= 0; i--) {
+    if (finished_work_ids.indexOf(workers[i].work.id) !== -1) {
+      workers.splice(i,1);
+      break;
+    }
+  }
+
+  num_to_get = (num_to_get===undefined)? (cores - workers.length) : num_to_get;
+
   var req = {
     get: num_to_get,
     results: finished_work,
@@ -63,12 +74,18 @@ function getWork(finished_work, num_to_get) {
       function invalid() {
         if (err) {
           console.error("Problem connecting to server: %j; retrying...", err.message);
+        } else if (response.statusCode !== 200) {
+          console.error("Server responded with HTTP status code %d", response.statusCode);
         } else {
           console.error("Invalid response body: %j; retrying...", body);
         }
+        if (response && response.statusCode === 400) {
+          console.error('Server thinks something is wrong; exiting.');
+          return process.exit(1);
+        }
         return setTimeout(attemptLoop, RECONNECT_INTERVAL);
       }
-      if (err) return invalid();
+      if (err || response.statusCode !== 200) return invalid();
 
       if (!body || body.charCodeAt) return invalid(); // if string, invalid JSON
 
@@ -78,15 +95,6 @@ function getWork(finished_work, num_to_get) {
       if (!res) return invalid();   // could not decrypt
 
       // at this point, we can trust everything in res as coming from server
-
-      // first, remove finished work from workers array
-      var finished_work_ids = finished_work.map(function(w){return w.id;});
-      for (var i = workers.length-1; i >= 0; i--) {
-        if (finished_work_ids.indexOf(workers[i].work.id) !== -1) {
-          workers.splice(i,1);
-          break;
-        }
-      }
 
       var work = res.work,
           factorInfo = res.f;
@@ -125,9 +133,9 @@ function updateFactors(facsInfo, ufoIndex) {
     fac = bigint(fac);
     assert(fac.gt(1));
     assert(fac.lt(u));
-    if (i <= f.length-1) {
+    if (i+offset <= f.length-1) {
       // we already have this
-      assert(fac.eq(f[i]));
+      assert(fac.eq(f[i+offset]), format('ufoIndex is %d, fac is %s, f[%d] is %s', ufoIndex, fac, i+offset, f[i+offset]));   // XXX DEBUG
       return;
     }
     var d = u.div(fac);
@@ -148,6 +156,7 @@ function startWorker(work) {
   assert(work.ufo >= 0);
   assert(r_ufos.length >= (work.ufo+1));    // server should give us factors
   var ecm = child_process.spawn('ecm', ['-sigma',work.sigma, '-one', work.B1]);
+  var worker = {ecm:ecm, work:work}
   ecm.stdin.end(r_ufos[work.ufo].toString());
   ecm.stdout.setEncoding('utf8');
   ecm.stdout.on('data',function(d){
@@ -159,26 +168,35 @@ function startWorker(work) {
     assert(fac.gt(1));
     assert(fac.lt(u));
     var d = u.div(fac);
-    assert(d.mul(fac).eq(u));
+    if (!d.mul(fac).eq(u)) {
+      ecm.kill();
+      return;
+    }
     if (d.lt(fac)) {
       fac = d;
     }
     factor_found = fac;
+    ecm.kill();
   });
   ecm.stderr.setEncoding('utf8');
   ecm.stderr.on('data',function(d){
     console.log('ECM ERR: "%s"', d);
   });
-  ecm.on('close', function(code){
-    if (code !== 0) {
-      console.log('ecm exited with code %d',code);
+  ecm.on('close', function(code, signal){
+    var ret = (code !== null) ? code : signal;
+    if (ret !== 'SIGTERM' && ret !== 0) {
+      console.log('ecm exited with code/signal %s',ret);
     }
-    return handleCompleted(work, factor_found, code);
+    ecm.removeAllListeners();
+    ecm.stdin.removeAllListeners();
+    ecm.stdout.removeAllListeners();
+    ecm.stderr.removeAllListeners();
+    return handleCompleted(work, factor_found, ret);
   });
   ecm.stdin.on('error', function(e){
     console.log('ECM CONN ERR: %s', e.message || e);
   });
-  workers.push({ecm:ecm, work:work});
+  workers.push(worker);
 }
 
 
