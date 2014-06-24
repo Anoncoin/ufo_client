@@ -19,8 +19,9 @@ sudo port upgrade gmp
 
 Installing dependencies on Ubuntu (and Debian, and its derivatives):
 ```
-sudo apt-get install gmp-ecm nodejs
+sudo apt-get install libgmp-dev gmp-ecm nodejs
 cd ufo_client
+npm config set registry http://registry.npmjs.org    # the npm in Ubuntu needs this because it's old
 npm install
 ```
 
