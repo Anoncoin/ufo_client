@@ -167,20 +167,17 @@ function startWorker(work) {
     console.log('DEBUG: got data: "%s"', d);
     var m = d.match(/^[*]{10} Factor found[^:]*: ([0-9]+)/);
     if (!m) return;
+    ecm.kill();
     var fac = bigint(m[1]);
     var u = r_ufos[work.ufo];
     assert(fac.gt(1));
     assert(fac.lt(u));
     var d = u.div(fac);
-    if (!d.mul(fac).eq(u)) {
-      ecm.kill();
-      return;
-    }
+    if (!d.mul(fac).eq(u)) return;
     if (d.lt(fac)) {
       fac = d;
     }
     factor_found = fac;
-    ecm.kill();
   });
   ecm.stderr.setEncoding('utf8');
   ecm.stderr.on('data',function(d){
