@@ -64,8 +64,8 @@ function getWork(finished_work, num_to_get) {
     pending: workers.map(function(worker){return worker.work.id}),
     f: f_ufos.map(function(facs){return facs.length;})
   };
-  var enc_req = {nick:nick, m:toServer(req)};
   function attemptLoop() {
+    var enc_req = {nick:nick, m:toServer(req)};
     request.post(SERVER_URL, {json: enc_req}, function(err, response, body) {
       function invalid() {
         if (err) {
