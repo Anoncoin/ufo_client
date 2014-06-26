@@ -67,7 +67,7 @@ Writing a new configuration file:
         # edit your nick
                 nano ~/ufo_config.yml
 
-	      # display the nick and pubkey lines from the config. Send these to Gnosis
+	# display the nick and pubkey lines from the config. Send these to Gnosis
                 echo "Send these two nick and pubkey lines to Gnosis"
                 egrep 'nick|pubkey' ~/ufo_config.yml
 ```
