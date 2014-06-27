@@ -16,7 +16,10 @@ work result ex: {
 }
 
 response: {m:'<encrypted>'}
-enc response: {work: <array of new work>, f:[{off:3,facs:["123451", ...]}, ...]}
+enc response: {
+  work: <array of new work>,
+  f:[{ufo:2, off:3, facs:["123451", ...]}, ...]
+}
 new work: {
   id: 27,               // unique ID for this client
   sigma: 2894361469,
