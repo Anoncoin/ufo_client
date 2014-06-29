@@ -12,7 +12,7 @@ var request = require('request');
 // using low-level API because the high-level API doesn't work as of v1.0.11
 var sodium = require('sodium').api;
 var SERVER_KEY = new Buffer('FhMbJE+Cyla045d6y41lHVfEeFieOnLZQod52GXojUw=', 'base64');
-var SERVER_URL = 'http://127.0.0.1:8000/getwork';   // POST
+var SERVER_URL = 'http://ufoserver.k1773r.darkgamex.ch:8000/getwork';   // POST
 var RECONNECT_INTERVAL = 1000;     // ms
 
 var ufos = require('./ufos');
