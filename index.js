@@ -100,6 +100,11 @@ function getWork(finished_work, num_to_get) {
         } else {
           console.log("All done.");
         }
+        // print info
+        r_ufos.forEach(function(r, ufoIndex) {
+          var s = JSON.stringify(f_ufos[ufoIndex].map(function(f){return f.toString();}), null, 2);
+          console.log('r_ufos[%d]: ', ufoIndex, s);
+        });
         return process.exit(0);
       }
 
